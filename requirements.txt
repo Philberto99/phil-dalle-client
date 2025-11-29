@@ -1,4 +1,5 @@
-dotenvflask
+python-dotenv
+Flask
 python-dotenv
 azure-identity
 openai
