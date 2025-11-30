@@ -30,6 +30,7 @@ def generate_image():
         return jsonify({"error": "Prompt is required"}), 400
 
     try:
+        # Build the Azure OpenAI image generation endpoint
         url = f"{endpoint}/openai/deployments/{model_deployment}/images/generations?api-version={api_version}"
 
         headers = {
@@ -47,6 +48,7 @@ def generate_image():
         response.raise_for_status()
         result = response.json()
 
+        # Extract the image URL from the response
         image_url = result.get("data", [{}])[0].get("url")
 
         if not image_url:
