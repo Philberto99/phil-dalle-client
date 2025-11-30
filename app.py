@@ -10,8 +10,9 @@ app = Flask(__name__)
 
 # === Load environment variables from .env ===
 load_dotenv()
-endpoint = os.getenv("ENDPOINT")
-model_deployment = os.getenv("MODEL_DEPLOYMENT")
+endpoint = os.getenv("ENDPOINT")  # e.g. https://philbot251114instance.cognitiveservices.azure.com/
+api_version = os.getenv("API_VERSION")  # e.g. 2024-02-01
+model_deployment = os.getenv("MODEL_DEPLOYMENT")  # e.g. dall-e-3
 api_key = os.getenv("AZURE_OPENAI_API_KEY")
 
 # === Home Route (for browser UI) ===
@@ -19,7 +20,7 @@ api_key = os.getenv("AZURE_OPENAI_API_KEY")
 def index():
     return render_template("index.html")
 
-# === Image Generation Route (Foundry API) ===
+# === Image Generation Route (Azure OpenAI REST) ===
 @app.route("/generate", methods=["POST"])
 def generate_image():
     data = request.get_json()
@@ -29,30 +30,24 @@ def generate_image():
         return jsonify({"error": "Prompt is required"}), 400
 
     try:
-        url = f"{endpoint}/infer"
+        url = f"{endpoint}/openai/deployments/{model_deployment}/images/generations?api-version={api_version}"
 
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
+            "api-key": api_key
         }
 
         payload = {
-            "inputs": {
-                "prompt": prompt
-            },
-            "deployment": model_deployment
+            "prompt": prompt,
+            "n": 1,
+            "size": "1024x1024"
         }
 
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         result = response.json()
 
-        # Try multiple ways to extract image URL
-        image_url = (
-            result.get("outputs", {}).get("image_url") or
-            result.get("outputs", {}).get("images", [{}])[0].get("url") or
-            result.get("data", [{}])[0].get("url")
-        )
+        image_url = result.get("data", [{}])[0].get("url")
 
         if not image_url:
             return jsonify({
