@@ -10,9 +10,9 @@ app = Flask(__name__)
 
 # === Load environment variables from .env ===
 load_dotenv()
-endpoint = os.getenv("ENDPOINT")  # e.g. https://philbot251114instance.cognitiveservices.azure.com/
+endpoint = os.getenv("ENDPOINT")  # https://philbot251114instance.services.ai.azure.com/
 api_version = os.getenv("API_VERSION")  # e.g. 2024-02-01
-model_deployment = os.getenv("MODEL_DEPLOYMENT")  # e.g. dall-e-3
+model_deployment = os.getenv("MODEL_DEPLOYMENT")  # dall-e-3
 api_key = os.getenv("AZURE_OPENAI_API_KEY")
 
 # === Home Route (for browser UI) ===
