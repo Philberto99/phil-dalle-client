@@ -2,7 +2,7 @@
 import os
 import json
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template  # ← added render_template
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
@@ -32,12 +32,12 @@ client = AzureOpenAI(
     azure_ad_token_provider=token_provider
 )
 
-# === Home Route ===
+# === Home Route (for browser UI) ===
 @app.route("/", methods=["GET"])
-def home():
-    return "✅ phil-dalle-client is live and ready to generate images!"
+def index():
+    return render_template("index.html")  # ← serves the HTML frontend
 
-# === Image Generation Route ===
+# === Image Generation Route (API) ===
 @app.route("/generate", methods=["POST"])
 def generate_image():
     data = request.get_json()
