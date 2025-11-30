@@ -10,17 +10,16 @@ app = Flask(__name__)
 
 # === Load environment variables from .env ===
 load_dotenv()
-endpoint = os.getenv("ENDPOINT")  # https://philbot251114instance.services.ai.azure.com/
-api_version = os.getenv("API_VERSION")  # e.g. 2024-02-01
+endpoint = os.getenv("ENDPOINT")  # https://phil251123tig-resource.services.ai.azure.com/api/projects/phil251123tig
 model_deployment = os.getenv("MODEL_DEPLOYMENT")  # dall-e-3
-api_key = os.getenv("AZURE_OPENAI_API_KEY")
+api_key = os.getenv("AZURE_OPENAI_API_KEY")       # Foundry API key
 
 # === Home Route (for browser UI) ===
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-# === Image Generation Route (Azure OpenAI REST) ===
+# === Image Generation Route (Foundry API) ===
 @app.route("/generate", methods=["POST"])
 def generate_image():
     data = request.get_json()
@@ -30,26 +29,31 @@ def generate_image():
         return jsonify({"error": "Prompt is required"}), 400
 
     try:
-        # Build the Azure OpenAI image generation endpoint
-        url = f"{endpoint}/openai/deployments/{model_deployment}/images/generations?api-version={api_version}"
+        # Foundry infer endpoint
+        url = f"{endpoint}/infer"
 
         headers = {
             "Content-Type": "application/json",
-            "api-key": api_key
+            "Authorization": f"Bearer {api_key}"
         }
 
         payload = {
-            "prompt": prompt,
-            "n": 1,
-            "size": "1024x1024"
+            "inputs": {
+                "prompt": prompt
+            },
+            "deployment": model_deployment
         }
 
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         result = response.json()
 
-        # Extract the image URL from the response
-        image_url = result.get("data", [{}])[0].get("url")
+        # Foundry responses can vary — try multiple extraction paths
+        image_url = (
+            result.get("outputs", {}).get("image_url") or
+            result.get("outputs", {}).get("images", [{}])[0].get("url") or
+            result.get("data", [{}])[0].get("url")
+        )
 
         if not image_url:
             return jsonify({
