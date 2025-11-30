@@ -2,10 +2,8 @@
 import os
 import json
 import requests
-from flask import Flask, request, jsonify, render_template  # ← added render_template
+from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
-from openai import AzureOpenAI
 
 # === Flask App Setup ===
 app = Flask(__name__)
@@ -14,30 +12,14 @@ app = Flask(__name__)
 load_dotenv()
 endpoint = os.getenv("ENDPOINT")
 model_deployment = os.getenv("MODEL_DEPLOYMENT")
-api_version = os.getenv("API_VERSION")
-
-# === Azure OpenAI Client Setup ===
-# Uses DefaultAzureCredential to authenticate via Azure AD
-token_provider = get_bearer_token_provider(
-    DefaultAzureCredential(
-        exclude_environment_credential=True,
-        exclude_managed_identity_credential=True
-    ),
-    "https://cognitiveservices.azure.com/.default"
-)
-
-client = AzureOpenAI(
-    api_version=api_version,
-    azure_endpoint=endpoint,
-    azure_ad_token_provider=token_provider
-)
+api_key = os.getenv("AZURE_OPENAI_API_KEY")
 
 # === Home Route (for browser UI) ===
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")  # ← serves the HTML frontend
+    return render_template("index.html")
 
-# === Image Generation Route (API) ===
+# === Image Generation Route (Foundry API) ===
 @app.route("/generate", methods=["POST"])
 def generate_image():
     data = request.get_json()
@@ -47,18 +29,31 @@ def generate_image():
         return jsonify({"error": "Prompt is required"}), 400
 
     try:
-        # Call Azure OpenAI to generate image
-        result = client.images.generate(
-            model=model_deployment,
-            prompt=prompt,
-            n=1
-        )
+        url = f"{endpoint}/infer"
 
-        # Parse response to extract image URL
-        json_response = json.loads(result.model_dump_json())
-        image_url = json_response["data"][0]["url"]
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}"
+        }
+
+        payload = {
+            "inputs": {
+                "prompt": prompt
+            },
+            "deployment": model_deployment  # e.g., "dall-e-3"
+        }
+
+        response = requests.post(url, headers=headers, json=payload)
+        response.raise_for_status()
+        result = response.json()
+
+        image_url = result.get("outputs", {}).get("image_url")
+
+        if not image_url:
+            return jsonify({"error": "No image URL returned"}), 500
 
         return jsonify({"image_url": image_url})
+
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 
