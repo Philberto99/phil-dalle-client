@@ -40,17 +40,25 @@ def generate_image():
             "inputs": {
                 "prompt": prompt
             },
-            "deployment": model_deployment  # e.g., "dall-e-3"
+            "deployment": model_deployment
         }
 
         response = requests.post(url, headers=headers, json=payload)
         response.raise_for_status()
         result = response.json()
 
-        image_url = result.get("outputs", {}).get("image_url")
+        # Try multiple ways to extract image URL
+        image_url = (
+            result.get("outputs", {}).get("image_url") or
+            result.get("outputs", {}).get("images", [{}])[0].get("url") or
+            result.get("data", [{}])[0].get("url")
+        )
 
         if not image_url:
-            return jsonify({"error": "No image URL returned"}), 500
+            return jsonify({
+                "error": "No image URL returned",
+                "raw_response": result
+            }), 500
 
         return jsonify({"image_url": image_url})
 
