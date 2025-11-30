@@ -1,88 +1,67 @@
+# === Imports ===
 import os
 import json
-
-# Add references
+import requests
+from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
-import requests
 
+# === Flask App Setup ===
+app = Flask(__name__)
 
-def main(): 
-    # Clear the console
-    os.system('cls' if os.name == 'nt' else 'clear')
-        
-    try: 
-        # Get configuration settings 
-        load_dotenv()
-        endpoint = os.getenv("ENDPOINT")
-        model_deployment = os.getenv("MODEL_DEPLOYMENT")
-        api_version = os.getenv("API_VERSION")
-        
-        # Initialize the client
-        token_provider = get_bearer_token_provider(
-            DefaultAzureCredential(
-                exclude_environment_credential=True,
-                exclude_managed_identity_credential=True
-            ),
-            "https://cognitiveservices.azure.com/.default"
+# === Load environment variables from .env ===
+load_dotenv()
+endpoint = os.getenv("ENDPOINT")
+model_deployment = os.getenv("MODEL_DEPLOYMENT")
+api_version = os.getenv("API_VERSION")
+
+# === Azure OpenAI Client Setup ===
+# Uses DefaultAzureCredential to authenticate via Azure AD
+token_provider = get_bearer_token_provider(
+    DefaultAzureCredential(
+        exclude_environment_credential=True,
+        exclude_managed_identity_credential=True
+    ),
+    "https://cognitiveservices.azure.com/.default"
+)
+
+client = AzureOpenAI(
+    api_version=api_version,
+    azure_endpoint=endpoint,
+    azure_ad_token_provider=token_provider
+)
+
+# === Home Route ===
+@app.route("/", methods=["GET"])
+def home():
+    return "✅ phil-dalle-client is live and ready to generate images!"
+
+# === Image Generation Route ===
+@app.route("/generate", methods=["POST"])
+def generate_image():
+    data = request.get_json()
+    prompt = data.get("prompt", "").strip()
+
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+
+    try:
+        # Call Azure OpenAI to generate image
+        result = client.images.generate(
+            model=model_deployment,
+            prompt=prompt,
+            n=1
         )
 
-        client = AzureOpenAI(
-            api_version=api_version,
-            azure_endpoint=endpoint,
-            azure_ad_token_provider=token_provider
-        )
-         
-        img_no = 0
-        # Loop until the user types 'quit'
-        while True:
-            # Get input text
-            input_text = input("Enter the prompt (or type 'quit' to exit): ")
-            if input_text.lower() == "quit":
-                break
-            if len(input_text) == 0:
-                print("Please enter a prompt.")
-                continue
-            
-            # Generate an image
-            result = client.images.generate(
-                model=model_deployment,
-                prompt=input_text,
-                n=1
-            )
+        # Parse response to extract image URL
+        json_response = json.loads(result.model_dump_json())
+        image_url = json_response["data"][0]["url"]
 
-            # Parse JSON response to extract the image URL
-            json_response = json.loads(result.model_dump_json())
-            image_url = json_response["data"][0]["url"]
-            print(f"Generated image URL: {image_url}")
-            
-            # Save the image
-            img_no += 1
-            file_name = f"image_{img_no}.png"
-            save_image(image_url, file_name)
-
+        return jsonify({"image_url": image_url})
     except Exception as ex:
-        print(ex)
+        return jsonify({"error": str(ex)}), 500
 
-
-def save_image(image_url, file_name):
-    # Set the directory for the stored image
-    image_dir = os.path.join(os.getcwd(), 'images')
-
-    # If the directory doesn't exist, create it
-    if not os.path.isdir(image_dir):
-        os.mkdir(image_dir)
-
-    # Initialize the image path (note the filetype should be png)
-    image_path = os.path.join(image_dir, file_name)
-
-    # Retrieve the generated image
-    generated_image = requests.get(image_url).content  # download the image
-    with open(image_path, "wb") as image_file:
-        image_file.write(generated_image)
-    print(f"Image saved as {image_path}")
-
-
-if __name__ == '__main__': 
-    main()
+# === Run Locally (ignored by Render) ===
+if __name__ == "__main__":
+    app.run(debug=True)
