@@ -1,83 +1,74 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>phil-dalle-client</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>phil-dalle-client UI</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
-    header { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
-    .ok { color: #0a7a3f; font-weight: 600; }
-    form { display: grid; gap: .75rem; margin-bottom: 1rem; }
-    input[type="text"] { padding: .6rem .8rem; font-size: 1rem; width: 100%; }
-    button { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
-    .status { min-height: 1.25rem; color: #555; }
-    img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
-    .result { margin-top: 1rem; }
-    code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
-    footer { margin-top: 3rem; font-size: .9rem; color: #777; text-align: center; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2em;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    #result {
+      margin-top: 1em;
+      padding: 1em;
+      background: #fff;
+      border: 1px solid #ccc;
+    }
+    input[type="text"] {
+      width: 60%;
+      padding: 0.5em;
+      font-size: 1em;
+    }
+    button {
+      padding: 0.5em 1em;
+      font-size: 1em;
+      margin-left: 0.5em;
+      cursor: pointer;
+    }
+    img {
+      margin-top: 1em;
+      max-width: 100%;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
-  <header>
-    <span class="ok">✅</span>
-    <div>phil-dalle-client UI</div>
-  </header>
-
+  <h1>phil-dalle-client UI</h1>
   <p>Enter a prompt, click Generate, and we’ll fetch the image URL from <code>/generate</code>.</p>
 
-  <form id="form">
-    <input id="prompt" type="text" placeholder="e.g. A robot drinking sherry in Jerez" />
-    <button type="submit">Generate</button>
-    <div class="status" id="status"></div>
-  </form>
+  <input type="text" id="prompt" placeholder="Enter your prompt here">
+  <button onclick="generateImage()">Generate</button>
 
-  <div class="result" id="result"></div>
-
-  <footer>
-    Development version 1.001 — <a href="/health" target="_blank">health check</a>
-  </footer>
+  <div id="result"></div>
 
   <script>
-    const form = document.getElementById('form');
-    const promptInput = document.getElementById('prompt');
-    const statusEl = document.getElementById('status');
-    const resultEl = document.getElementById('result');
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const prompt = promptInput.value.trim();
-      if (!prompt) {
-        statusEl.textContent = 'Please enter a prompt.';
-        return;
-      }
-      statusEl.textContent = 'Generating...';
+    async function generateImage() {
+      const prompt = document.getElementById("prompt").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "Generating...";
 
       try {
-        const res = await fetch('/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ prompt })
         });
 
-        const data = await res.json();
-        if (!res.ok) {
-          statusEl.textContent = data.error || 'Something went wrong.';
-          resultEl.innerHTML = '';
-          return;
-        }
+        const data = await response.json();
 
-        statusEl.textContent = 'Done!';
-        const url = data.image_url;
-        resultEl.innerHTML = `
-          <p><strong>Image URL:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a></p>
-          <img src="${url}" alt="Generated image" />
-        `;
+        if (data.error) {
+          resultDiv.innerHTML = `<strong>Error:</strong> ${data.error}<br><pre>${JSON.stringify(data.raw_response || {}, null, 2)}</pre><br><em>${data.footer}</em>`;
+        } else {
+          resultDiv.innerHTML = `<strong>Image URL:</strong> <a href="${data.image_url}" target="_blank">${data.image_url}</a><br><em>${data.footer}</em><br><img src="${data.image_url}" alt="Generated image">`;
+        }
       } catch (err) {
-        statusEl.textContent = 'Network error.';
-        resultEl.innerHTML = '';
+        resultDiv.innerHTML = `<strong>Exception:</strong> ${err}`;
       }
-    });
+    }
   </script>
 </body>
 </html>
