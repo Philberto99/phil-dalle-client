@@ -20,6 +20,9 @@ def get_access_token():
     token: AccessToken = credential.get_token("https://ai.azure.com/.default")
     return token.token
 
+# === Footer Version ===
+FOOTER = "Development version 1.001"
+
 # === Home Route ===
 @app.route("/", methods=["GET"])
 def index():
@@ -32,7 +35,7 @@ def generate_image():
     prompt = data.get("prompt", "").strip()
 
     if not prompt:
-        return jsonify({"error": "Prompt is required"}), 400
+        return jsonify({"error": "Prompt is required", "footer": FOOTER}), 400
 
     try:
         url = f"{endpoint}/infer"
@@ -71,13 +74,14 @@ def generate_image():
             print("DEBUG: Raw Foundry response:", result)  # Log to console
             return jsonify({
                 "error": "No image URL returned",
-                "raw_response": result
+                "raw_response": result,
+                "footer": FOOTER
             }), 500
 
-        return jsonify({"image_url": image_url})
+        return jsonify({"image_url": image_url, "footer": FOOTER})
 
     except Exception as ex:
-        return jsonify({"error": str(ex)}), 500
+        return jsonify({"error": str(ex), "footer": FOOTER}), 500
 
 # === Health Check Route ===
 @app.route("/health", methods=["GET"])
@@ -88,12 +92,14 @@ def health_check():
             "status": "ok",
             "token_prefix": token[:20] + "...",
             "endpoint": endpoint,
-            "deployment": model_deployment
+            "deployment": model_deployment,
+            "footer": FOOTER
         })
     except Exception as ex:
         return jsonify({
             "status": "error",
-            "message": str(ex)
+            "message": str(ex),
+            "footer": FOOTER
         }), 500
 
 # === Run Locally ===
