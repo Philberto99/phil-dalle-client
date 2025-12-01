@@ -21,7 +21,7 @@ def get_access_token():
     return token.token
 
 # === Footer Version ===
-FOOTER = "Development version 1.004"
+FOOTER = "Development version 1.005"
 
 # === Home Route ===
 @app.route("/", methods=["GET"])
