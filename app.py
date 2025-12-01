@@ -21,7 +21,7 @@ def get_access_token():
     return token.token
 
 # === Footer Version ===
-FOOTER = "Development version 1.001"
+FOOTER = "Development version 1.003"
 
 # === Home Route ===
 @app.route("/", methods=["GET"])
@@ -92,7 +92,28 @@ def health_check():
             "status": "ok",
             "token_prefix": token[:20] + "...",
             "endpoint": endpoint,
-            "deployment": model_deployment,
+            "deployment": f"Deployment active: {model_deployment}",
+            "footer": FOOTER
+        })
+    except Exception as ex:
+        return jsonify({
+            "status": "error",
+            "message": str(ex),
+            "footer": FOOTER
+        }), 500
+
+# === Debug Route ===
+@app.route("/debug", methods=["GET"])
+def debug_info():
+    try:
+        token = get_access_token()
+        env_vars = {key: os.getenv(key) for key in sorted(os.environ.keys())}
+        return jsonify({
+            "status": "ok",
+            "token_prefix": token[:20] + "...",
+            "endpoint": endpoint,
+            "deployment": f"Currently wired to {model_deployment}",
+            "env": env_vars,
             "footer": FOOTER
         })
     except Exception as ex:
