@@ -68,7 +68,11 @@ def generate_image():
             image_url = result.get("url")
 
         if not image_url:
-            return jsonify({"error": "No image URL returned", "raw_response": result}), 500
+            print("DEBUG: Raw Foundry response:", result)  # Log to console
+            return jsonify({
+                "error": "No image URL returned",
+                "raw_response": result
+            }), 500
 
         return jsonify({"image_url": image_url})
 
