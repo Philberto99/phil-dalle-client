@@ -11,7 +11,7 @@ app = Flask(__name__)
 load_dotenv()
 endpoint = os.getenv("ENDPOINT")  # Foundry project endpoint
 model_deployment = os.getenv("MODEL_DEPLOYMENT")  # dall-e-3
-api_key = os.getenv("AZURE_OPENAI_API_KEY")       # Foundry project key
+api_key = os.getenv("FOUNDRY_API_KEY")            # Foundry project key
 
 # === Home Route (for browser UI) ===
 @app.route("/", methods=["GET"])
