@@ -3,22 +3,29 @@ import os
 import requests
 from flask import Flask, request, jsonify, render_template
 from dotenv import load_dotenv
+from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AccessToken
 
 # === Flask App Setup ===
 app = Flask(__name__)
 
 # === Load environment variables from .env ===
 load_dotenv()
-endpoint = os.getenv("ENDPOINT")  # Foundry project endpoint
-model_deployment = os.getenv("MODEL_DEPLOYMENT")  # dall-e-3
-api_key = os.getenv("FOUNDRY_API_KEY")            # Foundry project key
+endpoint = os.getenv("ENDPOINT")
+model_deployment = os.getenv("MODEL_DEPLOYMENT")
 
-# === Home Route (for browser UI) ===
+# === Token Fetcher ===
+def get_access_token():
+    credential = DefaultAzureCredential()
+    token: AccessToken = credential.get_token("https://ai.azure.com/.default")
+    return token.token
+
+# === Home Route ===
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
 
-# === Image Generation Route (Foundry infer style) ===
+# === Image Generation Route ===
 @app.route("/generate", methods=["POST"])
 def generate_image():
     data = request.get_json()
@@ -28,24 +35,25 @@ def generate_image():
         return jsonify({"error": "Prompt is required"}), 400
 
     try:
-        # Foundry infer endpoint
         url = f"{endpoint}/infer"
-
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
+            "Authorization": f"Bearer {get_access_token()}"
         }
-
         payload = {
-            "inputs": { "prompt": prompt },
+            "inputs": {"prompt": prompt},
             "deployment": model_deployment
         }
 
         response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            pass  # Foundry may return payload even with 401
+
         result = response.json()
 
-        # Try to extract image URL from common response shapes
         image_url = None
         if "outputs" in result:
             if isinstance(result["outputs"], dict):
@@ -56,18 +64,34 @@ def generate_image():
                 image_url = result["outputs"][0].get("url")
         elif "data" in result:
             image_url = result["data"][0].get("url")
+        elif "url" in result:
+            image_url = result.get("url")
 
         if not image_url:
-            return jsonify({
-                "error": "No image URL returned",
-                "raw_response": result
-            }), 500
+            return jsonify({"error": "No image URL returned", "raw_response": result}), 500
 
         return jsonify({"image_url": image_url})
 
     except Exception as ex:
         return jsonify({"error": str(ex)}), 500
 
-# === Run Locally (ignored by Render) ===
+# === Health Check Route ===
+@app.route("/health", methods=["GET"])
+def health_check():
+    try:
+        token = get_access_token()
+        return jsonify({
+            "status": "ok",
+            "token_prefix": token[:20] + "...",
+            "endpoint": endpoint,
+            "deployment": model_deployment
+        })
+    except Exception as ex:
+        return jsonify({
+            "status": "error",
+            "message": str(ex)
+        }), 500
+
+# === Run Locally ===
 if __name__ == "__main__":
     app.run(debug=True)
