@@ -70,7 +70,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    UI version 1.015 🍍 — <a href="/health" target="_blank">health check</a>
+    UI version 1.018 🍇 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -112,7 +112,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, style, quality, size })
+          body: JSON.stringify({ prompt, style, quality, size })  // ✅ Correct stringify
         });
 
         const data = await res.json();
