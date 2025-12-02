@@ -15,7 +15,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 app = Flask(__name__)
 
 # === Footer Version ===
-FOOTER = "Development version 1.010"
+FOOTER = "Development version 1.011 🍍"
 
 @app.route("/", methods=["GET"])
 def index():
