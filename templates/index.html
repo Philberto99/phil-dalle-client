@@ -2,56 +2,97 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>phil-dalle-client</title>
+  <title>PhilGen</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
     header { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
     .ok { color: #0a7a3f; font-weight: 600; }
+    .title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #4B0082; }
     form { display: grid; gap: .75rem; margin-bottom: 1rem; }
-    input[type="text"] { padding: .6rem .8rem; font-size: 1rem; width: 100%; }
+    input[type="text"], select { padding: .6rem .8rem; font-size: 1rem; width: 100%; }
     button { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
     .status { min-height: 1.25rem; color: #555; }
     img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
-    .result { margin-top: 1rem; }
+    .result, .history { margin-top: 1rem; }
     code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
     footer { margin-top: 3rem; font-size: .9rem; color: #777; text-align: center; }
     pre { background: #f6f8fa; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    .radio-group { display: flex; gap: 1rem; }
   </style>
 </head>
 <body>
   <header>
     <span class="ok">✅</span>
-    <div>phil-dalle-client UI</div>
+    <div class="title">PhilGen</div>
   </header>
 
-  <p>Enter a prompt, click Generate, and we’ll fetch the image URL from <code>/generate</code>.</p>
+  <p>Please enter below, a prompt of an image you would like PhilGen to create.</p>
 
   <form id="form">
     <input id="prompt" type="text" placeholder="e.g. A robot drinking sherry in Jerez" />
+
+    <label for="style">Style:</label>
+    <select id="style">
+      <option value="vivid">Vivid</option>
+      <option value="natural">Natural</option>
+      <option value="surreal">Surreal</option>
+    </select>
+
+    <label for="quality">Quality:</label>
+    <select id="quality">
+      <option value="standard">Standard</option>
+      <option value="hd">HD</option>
+    </select>
+
+    <label>Size:</label>
+    <div class="radio-group">
+      <label><input type="radio" name="size" value="1024x1024" checked /> 1024×1024</label>
+      <label><input type="radio" name="size" value="1024x1792" /> 1024×1792</label>
+      <label><input type="radio" name="size" value="1792x1024" /> 1792×1024</label>
+    </div>
+
     <button type="submit">Generate</button>
     <div class="status" id="status"></div>
   </form>
 
   <div class="result" id="result"></div>
+  <div class="history" id="history"></div>
 
   <footer>
-    UI version 1.011 — <a href="/health" target="_blank">health check</a>
+    UI version 1.012 🍇 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
     const form = document.getElementById('form');
     const promptInput = document.getElementById('prompt');
+    const styleInput = document.getElementById('style');
+    const qualityInput = document.getElementById('quality');
     const statusEl = document.getElementById('status');
     const resultEl = document.getElementById('result');
+    const historyEl = document.getElementById('history');
+
+    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊'];
+    const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
+    document.querySelector('footer').innerHTML = `UI version 1.012 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+
+    const lastResults = [];
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const prompt = promptInput.value.trim();
+      const style = styleInput.value;
+      const quality = qualityInput.value;
+      const size = document.querySelector('input[name="size"]:checked').value;
+
       if (!prompt) {
         statusEl.textContent = 'Please enter a prompt.';
         return;
       }
+
+      const fullPrompt = `${prompt} [style: ${style}, quality: ${quality}, size: ${size}]`;
+
       statusEl.textContent = 'Generating...';
       resultEl.innerHTML = '';
 
@@ -59,7 +100,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
+          body: JSON.stringify({ prompt: fullPrompt })
         });
 
         const data = await res.json();
@@ -77,6 +118,13 @@
           <p><strong>Image URL:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a></p>
           <img src="${url}" alt="Generated image" />
         `;
+
+        lastResults.unshift({ prompt: fullPrompt, url });
+        if (lastResults.length > 3) lastResults.pop();
+
+        historyEl.innerHTML = '<h3>Last 3 prompts</h3>' + lastResults.map(r =>
+          `<p><em>${r.prompt}</em><br><img src="${r.url}" alt="Previous image" /></p>`
+        ).join('');
       } catch (err) {
         statusEl.textContent = 'Network error.';
         resultEl.innerHTML = '';
