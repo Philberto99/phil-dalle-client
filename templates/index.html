@@ -16,6 +16,7 @@
     .result { margin-top: 1rem; }
     code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
     footer { margin-top: 3rem; font-size: .9rem; color: #777; text-align: center; }
+    pre { background: #f6f8fa; padding: 1rem; border-radius: 6px; overflow-x: auto; }
   </style>
 </head>
 <body>
@@ -35,7 +36,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    Development version 1.001 — <a href="/health" target="_blank">health check</a>
+    UI version 1.007 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -52,6 +53,7 @@
         return;
       }
       statusEl.textContent = 'Generating...';
+      resultEl.innerHTML = '';
 
       try {
         const res = await fetch('/generate', {
@@ -63,11 +65,13 @@
         const data = await res.json();
         if (!res.ok) {
           statusEl.textContent = data.error || 'Something went wrong.';
-          resultEl.innerHTML = '';
+          resultEl.innerHTML = data.raw_response
+            ? `<pre><code>${JSON.stringify(data.raw_response, null, 2)}</code></pre>`
+            : '';
           return;
         }
 
-        statusEl.textContent = 'Done!';
+        statusEl.textContent = `Done! (${data.footer || 'unknown backend version'})`;
         const url = data.image_url;
         resultEl.innerHTML = `
           <p><strong>Image URL:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a></p>
@@ -79,6 +83,8 @@
       }
     });
   </script>
-  <p><em>UI version 1.006</em></p>
 </body>
+<footer>
+  UI version 1.007 — <a href="/health" target="_blank">health check</a>
+</footer>
 </html>
