@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>PhilGen v22</title>
+  <title>PhilGen v23</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
@@ -35,7 +35,7 @@
 <body>
   <header>
     <span class="ok">✅</span>
-    <div class="title">PhilGen v22</div>
+    <div class="title">PhilGen v23</div>
   </header>
 
   <p>Please enter below, a prompt of an image you would like PhilGen to create.</p>
@@ -69,7 +69,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    UI version 22 🍌 — <a href="/health" target="_blank">health check</a>
+    UI version 23 🍍 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -80,9 +80,9 @@
     const surpriseBtn = document.getElementById('surprise');
     const clearBtn = document.getElementById('clear');
 
-    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐','🍌🔵'];
+    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 22 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 23 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     const surprisePrompts = [
       "A neon jellyfish floating through a city skyline",
@@ -166,7 +166,7 @@
         block.innerHTML = `
           <p><em>${fullPrompt}</em></p>
           <p><strong>Image URL:</strong>
-            <span class="copy-btn" title="Click to copy URL" onclick="copyToClipboard('${url}')">📋</span>&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="copy-btn" title="Click to copy URL" onclick="copyToClipboard('${url}')">📋</span>
             <a href="${url}" target="_blank" rel="noopener">View image here</a>
           </p>
           <img src="${url}" alt="Generated image" />
