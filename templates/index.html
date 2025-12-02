@@ -9,9 +9,9 @@
     body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
     header { display: flex; align-items: center; gap: .5rem; margin-bottom: 1rem; }
     .ok { color: #0a7a3f; font-weight: 600; }
-    .title { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #4B0082; }
+    .title { font-family: 'Orbitron', sans-serif; font-size: 40px; color: #4B0082; }
     form { display: grid; gap: .75rem; margin-bottom: 1rem; }
-    input[type="text"], select { padding: .6rem .8rem; font-size: 1rem; width: 100%; }
+    input[type="text"] { padding: .6rem .8rem; font-size: 1rem; width: 100%; }
     button { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
     .status { min-height: 1.25rem; color: #555; }
     img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
@@ -19,7 +19,8 @@
     code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
     footer { margin-top: 3rem; font-size: .9rem; color: #777; text-align: center; }
     pre { background: #f6f8fa; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-    .radio-group { display: flex; gap: 1rem; }
+    .radio-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .copy-btn { cursor: pointer; margin-left: 0.5rem; }
   </style>
 </head>
 <body>
@@ -33,18 +34,18 @@
   <form id="form">
     <input id="prompt" type="text" placeholder="e.g. A robot drinking sherry in Jerez" />
 
-    <label for="style">Style:</label>
-    <select id="style">
-      <option value="vivid">Vivid</option>
-      <option value="natural">Natural</option>
-      <option value="surreal">Surreal</option>
-    </select>
+    <label>Style:</label>
+    <div class="radio-group" id="style-group">
+      <label><input type="radio" name="style" value="vivid" checked /> Vivid</label>
+      <label><input type="radio" name="style" value="natural" /> Natural</label>
+      <label><input type="radio" name="style" value="surreal" /> Surreal</label>
+    </div>
 
-    <label for="quality">Quality:</label>
-    <select id="quality">
-      <option value="standard">Standard</option>
-      <option value="hd">HD</option>
-    </select>
+    <label>Quality:</label>
+    <div class="radio-group" id="quality-group">
+      <label><input type="radio" name="quality" value="standard" checked /> Standard</label>
+      <label><input type="radio" name="quality" value="hd" /> HD</label>
+    </div>
 
     <label>Size:</label>
     <div class="radio-group">
@@ -61,30 +62,38 @@
   <div class="history" id="history"></div>
 
   <footer>
-    UI version 1.012 🍇 — <a href="/health" target="_blank">health check</a>
+    UI version 1.014 🍊 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
     const form = document.getElementById('form');
     const promptInput = document.getElementById('prompt');
-    const styleInput = document.getElementById('style');
-    const qualityInput = document.getElementById('quality');
     const statusEl = document.getElementById('status');
     const resultEl = document.getElementById('result');
     const historyEl = document.getElementById('history');
 
     const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 1.012 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 1.014 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     const lastResults = [];
+
+    function getSelectedValue(name) {
+      const selected = document.querySelector(`input[name="${name}"]:checked`);
+      return selected ? selected.value : '';
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      alert('Image URL copied to clipboard!');
+    }
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const prompt = promptInput.value.trim();
-      const style = styleInput.value;
-      const quality = qualityInput.value;
-      const size = document.querySelector('input[name="size"]:checked').value;
+      const style = getSelectedValue('style');
+      const quality = getSelectedValue('quality');
+      const size = getSelectedValue('size');
 
       if (!prompt) {
         statusEl.textContent = 'Please enter a prompt.';
@@ -114,16 +123,26 @@
 
         statusEl.textContent = `Done! (${data.footer || 'unknown backend version'})`;
         const url = data.image_url;
+
         resultEl.innerHTML = `
-          <p><strong>Image URL:</strong> <a href="${url}" target="_blank" rel="noopener">${url}</a></p>
+          <p><strong>Image URL:</strong>
+            <span class="copy-btn" onclick="copyToClipboard('${url}')">📋</span>
+            <a href="${url}" target="_blank" rel="noopener">View image here</a>
+          </p>
           <img src="${url}" alt="Generated image" />
         `;
 
-        lastResults.unshift({ prompt: fullPrompt, url });
-        if (lastResults.length > 3) lastResults.pop();
+        if (!lastResults.length || lastResults[0].url !== url) {
+          lastResults.unshift({ prompt: fullPrompt, url });
+          if (lastResults.length > 3) lastResults.pop();
+        }
 
         historyEl.innerHTML = '<h3>Last 3 prompts</h3>' + lastResults.map(r =>
-          `<p><em>${r.prompt}</em><br><img src="${r.url}" alt="Previous image" /></p>`
+          `<p><em>${r.prompt}</em><br>
+            <span class="copy-btn" onclick="copyToClipboard('${r.url}')">📋</span>
+            <a href="${r.url}" target="_blank" rel="noopener">View image here</a><br>
+            <img src="${r.url}" alt="Previous image" />
+          </p>`
         ).join('');
       } catch (err) {
         statusEl.textContent = 'Network error.';
