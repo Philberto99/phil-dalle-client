@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>PhilGen</title>
+  <title>PhilGen v22</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
   <style>
@@ -11,9 +11,11 @@
     .ok { color: #0a7a3f; font-weight: 600; }
     .title { font-family: 'Orbitron', sans-serif; font-size: 40px; color: #4B0082; }
     form { display: grid; gap: .75rem; margin-bottom: 1rem; }
-    .prompt-row { display: flex; gap: 1rem; align-items: center; }
+    .prompt-row { display: flex; gap: 0.5rem; align-items: center; }
     input[type="text"] { padding: .6rem .8rem; font-size: 1rem; flex: 1; }
-    #surprise { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
+    #clear { cursor: pointer; font-size: 1.2rem; padding: 0 .5rem; }
+    #clear:hover::after { content: " clear prompt"; font-size: 0.9rem; color: #555; margin-left: 0.3rem; }
+    #surprise { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; font-family: "Comic Sans MS", cursive, sans-serif; }
     button[type="submit"] { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
     .status { min-height: 1.25rem; color: #555; }
     img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
@@ -33,7 +35,7 @@
 <body>
   <header>
     <span class="ok">✅</span>
-    <div class="title">PhilGen</div>
+    <div class="title">PhilGen v22</div>
   </header>
 
   <p>Please enter below, a prompt of an image you would like PhilGen to create.</p>
@@ -41,17 +43,11 @@
   <form id="form">
     <div class="prompt-row">
       <input id="prompt" type="text" placeholder="e.g. A robot drinking sherry in Jerez" />
+      <span id="clear">✖</span>
       <button type="button" id="surprise">Surprise me</button>
     </div>
 
     <div class="radio-row">
-      <div>
-        <label>Style:</label><br>
-        <label><input type="radio" name="style" value="vivid" checked /> Vivid</label>
-        <label><input type="radio" name="style" value="natural" /> Natural</label>
-        <label><input type="radio" name="style" value="surreal" /> Surreal</label>
-      </div>
-
       <div>
         <label>Quality:</label><br>
         <label><input type="radio" name="quality" value="standard" checked /> Standard</label>
@@ -73,7 +69,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    UI version 21 🍍 — <a href="/health" target="_blank">health check</a>
+    UI version 22 🍌 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -82,10 +78,11 @@
     const statusEl = document.getElementById('status');
     const resultEl = document.getElementById('result');
     const surpriseBtn = document.getElementById('surprise');
+    const clearBtn = document.getElementById('clear');
 
-    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐'];
+    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐','🍌🔵'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 21 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 22 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     const surprisePrompts = [
       "A neon jellyfish floating through a city skyline",
@@ -106,23 +103,21 @@
       "A giant book opening into a forest",
       "A carnival of planets orbiting a sun",
       "A surreal flamenco dancer made of fire",
-      "A futuristic train powered by oranges",
-      "A surreal library with flying books",
       "A glowing mushroom forest at night",
-      "A surreal beach with rainbow waves",
-      "A futuristic guitar made of glass",
-      "A surreal olive grove under neon lights",
-      "A cosmic cat chasing comets",
-      "A surreal windmill made of mirrors",
-      "A futuristic fountain of light",
-      "A surreal orchard with glowing fruit",
-      "A surreal café floating in space",
-      "A surreal robot gardener tending stars"
+      "A quiet forest path at sunrise",
+      "A mountain lake reflecting snowy peaks",
+      "A sandy beach with seashells and gentle waves",
+      "A rustic farmhouse surrounded by olive trees",
+      "A field of sunflowers facing the sun"
     ];
 
     surpriseBtn.addEventListener('click', () => {
       const randomPrompt = surprisePrompts[Math.floor(Math.random() * surprisePrompts.length)];
       promptInput.value = randomPrompt;
+    });
+
+    clearBtn.addEventListener('click', () => {
+      promptInput.value = '';
     });
 
     function getSelectedValue(name) {
@@ -137,7 +132,6 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const prompt = promptInput.value.trim();
-      const style = getSelectedValue('style');
       const quality = getSelectedValue('quality');
       const size = getSelectedValue('size');
 
@@ -146,7 +140,7 @@
         return;
       }
 
-      const fullPrompt = `${prompt} [style: ${style}, quality: ${quality}, size: ${size}]`;
+      const fullPrompt = `${prompt} [quality: ${quality}, size: ${size}]`;
 
       statusEl.textContent = 'Generating...';
 
@@ -154,7 +148,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, style, quality, size })
+          body: JSON.stringify({ prompt, quality, size })
         });
 
         const data = await res.json();
