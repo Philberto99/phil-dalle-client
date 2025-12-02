@@ -81,7 +81,7 @@
 
     const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 1.015 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 1.017 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     function getSelectedValue(name) {
       const selected = document.querySelector(`input[name="${name}"]:checked`);
@@ -112,7 +112,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: fullPrompt })
+          body: JSON.stringify({ prompt, style, quality, size })
         });
 
         const data = await res.json();
