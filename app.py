@@ -15,7 +15,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 app = Flask(__name__)
 
 # === Footer Version ===
-FOOTER = "Development version 1.008"
+FOOTER = "Development version 1.009"
 
 @app.route("/", methods=["GET"])
 def index():
@@ -88,7 +88,7 @@ def safe_json(resp):
 def health():
     return jsonify({
         "status": "ok",
-        "endpoint": ENDPOINT,
+        "endpoint": f"{ENDPOINT}?api-version={API_VERSION}",
         "api_version": API_VERSION,
         "deployment": f"Deployment active: {MODEL_DEPLOYMENT}",
         "auth": "Key",
