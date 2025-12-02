@@ -95,5 +95,40 @@ def health():
         "footer": FOOTER
     })
 
+@app.route("/debug", methods=["GET"])
+def debug():
+    """Debug route to show full request details and last response."""
+    test_prompt = "Debug test prompt"
+    payload = {
+        "model": MODEL_DEPLOYMENT,
+        "prompt": test_prompt,
+        "size": "256x256",
+        "n": 1
+    }
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}"
+    }
+    try:
+        resp = requests.post(
+            ENDPOINT,
+            headers=headers,
+            params={"api-version": API_VERSION},
+            data=json.dumps(payload)
+        )
+        return jsonify({
+            "request_url": f"{ENDPOINT}?api-version={API_VERSION}",
+            "headers": headers,
+            "payload": payload,
+            "status_code": resp.status_code,
+            "response": safe_json(resp),
+            "footer": FOOTER
+        })
+    except Exception as ex:
+        return jsonify({
+            "error": str(ex),
+            "footer": FOOTER
+        })
+
 if __name__ == "__main__":
     app.run(debug=True)
