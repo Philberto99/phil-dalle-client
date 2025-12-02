@@ -15,12 +15,19 @@
     button { padding: .6rem .9rem; font-size: 1rem; cursor: pointer; }
     .status { min-height: 1.25rem; color: #555; }
     img { max-width: 100%; border: 1px solid #ddd; border-radius: 6px; }
-    .result, .history { margin-top: 1rem; }
+    .result { margin-top: 1rem; }
+    .result-block { margin-bottom: 2rem; }
     code { background: #f6f8fa; padding: .1rem .3rem; border-radius: 4px; }
     footer { margin-top: 3rem; font-size: .9rem; color: #777; text-align: center; }
     pre { background: #f6f8fa; padding: 1rem; border-radius: 6px; overflow-x: auto; }
-    .radio-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .radio-row { display: flex; gap: 2rem; flex-wrap: wrap; align-items: center; }
     .copy-btn { cursor: pointer; margin-left: 0.5rem; }
+    .copy-btn:hover::after {
+      content: " click here to copy url";
+      font-size: 0.9rem;
+      color: #555;
+      margin-left: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -34,24 +41,26 @@
   <form id="form">
     <input id="prompt" type="text" placeholder="e.g. A robot drinking sherry in Jerez" />
 
-    <label>Style:</label>
-    <div class="radio-group" id="style-group">
-      <label><input type="radio" name="style" value="vivid" checked /> Vivid</label>
-      <label><input type="radio" name="style" value="natural" /> Natural</label>
-      <label><input type="radio" name="style" value="surreal" /> Surreal</label>
-    </div>
+    <div class="radio-row">
+      <div>
+        <label>Style:</label><br>
+        <label><input type="radio" name="style" value="vivid" checked /> Vivid</label>
+        <label><input type="radio" name="style" value="natural" /> Natural</label>
+        <label><input type="radio" name="style" value="surreal" /> Surreal</label>
+      </div>
 
-    <label>Quality:</label>
-    <div class="radio-group" id="quality-group">
-      <label><input type="radio" name="quality" value="standard" checked /> Standard</label>
-      <label><input type="radio" name="quality" value="hd" /> HD</label>
-    </div>
+      <div>
+        <label>Quality:</label><br>
+        <label><input type="radio" name="quality" value="standard" checked /> Standard</label>
+        <label><input type="radio" name="quality" value="hd" /> HD</label>
+      </div>
 
-    <label>Size:</label>
-    <div class="radio-group">
-      <label><input type="radio" name="size" value="1024x1024" checked /> 1024×1024</label>
-      <label><input type="radio" name="size" value="1024x1792" /> 1024×1792</label>
-      <label><input type="radio" name="size" value="1792x1024" /> 1792×1024</label>
+      <div>
+        <label>Size:</label><br>
+        <label><input type="radio" name="size" value="1024x1024" checked /> 1024×1024</label>
+        <label><input type="radio" name="size" value="1024x1792" /> 1024×1792</label>
+        <label><input type="radio" name="size" value="1792x1024" /> 1792×1024</label>
+      </div>
     </div>
 
     <button type="submit">Generate</button>
@@ -59,10 +68,9 @@
   </form>
 
   <div class="result" id="result"></div>
-  <div class="history" id="history"></div>
 
   <footer>
-    UI version 1.014 🍊 — <a href="/health" target="_blank">health check</a>
+    UI version 1.015 🍍 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -70,13 +78,10 @@
     const promptInput = document.getElementById('prompt');
     const statusEl = document.getElementById('status');
     const resultEl = document.getElementById('result');
-    const historyEl = document.getElementById('history');
 
     const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 1.014 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
-
-    const lastResults = [];
+    document.querySelector('footer').innerHTML = `UI version 1.015 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     function getSelectedValue(name) {
       const selected = document.querySelector(`input[name="${name}"]:checked`);
@@ -85,7 +90,6 @@
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text);
-      alert('Image URL copied to clipboard!');
     }
 
     form.addEventListener('submit', async (e) => {
@@ -103,7 +107,6 @@
       const fullPrompt = `${prompt} [style: ${style}, quality: ${quality}, size: ${size}]`;
 
       statusEl.textContent = 'Generating...';
-      resultEl.innerHTML = '';
 
       try {
         const res = await fetch('/generate', {
@@ -115,38 +118,26 @@
         const data = await res.json();
         if (!res.ok) {
           statusEl.textContent = data.error || 'Something went wrong.';
-          resultEl.innerHTML = data.raw_response
-            ? `<pre><code>${JSON.stringify(data.raw_response, null, 2)}</code></pre>`
-            : '';
           return;
         }
 
         statusEl.textContent = `Done! (${data.footer || 'unknown backend version'})`;
         const url = data.image_url;
 
-        resultEl.innerHTML = `
+        const block = document.createElement('div');
+        block.className = 'result-block';
+        block.innerHTML = `
+          <p><em>${fullPrompt}</em></p>
           <p><strong>Image URL:</strong>
-            <span class="copy-btn" onclick="copyToClipboard('${url}')">📋</span>
+            <span class="copy-btn" onclick="copyToClipboard('${url}')">📋</span>&nbsp;&nbsp;&nbsp;&nbsp;
             <a href="${url}" target="_blank" rel="noopener">View image here</a>
           </p>
           <img src="${url}" alt="Generated image" />
         `;
 
-        if (!lastResults.length || lastResults[0].url !== url) {
-          lastResults.unshift({ prompt: fullPrompt, url });
-          if (lastResults.length > 3) lastResults.pop();
-        }
-
-        historyEl.innerHTML = '<h3>Last 3 prompts</h3>' + lastResults.map(r =>
-          `<p><em>${r.prompt}</em><br>
-            <span class="copy-btn" onclick="copyToClipboard('${r.url}')">📋</span>
-            <a href="${r.url}" target="_blank" rel="noopener">View image here</a><br>
-            <img src="${r.url}" alt="Previous image" />
-          </p>`
-        ).join('');
+        resultEl.prepend(block);
       } catch (err) {
         statusEl.textContent = 'Network error.';
-        resultEl.innerHTML = '';
       }
     });
   </script>
