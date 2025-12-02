@@ -15,7 +15,7 @@ API_KEY = os.getenv("OPENAI_API_KEY")
 app = Flask(__name__)
 
 # === Footer Version ===
-FOOTER = "Development version 1.017 🍇"
+FOOTER = "Development version 1.021 🍍"
 
 @app.route("/", methods=["GET"])
 def index():
@@ -29,18 +29,14 @@ def generate_image():
         if not prompt:
             return jsonify({"error": "Prompt is required", "footer": FOOTER}), 400
 
-        # Parse size, style, quality from payload (defaults if missing)
+        # Parse size from payload (defaults if missing)
         size = data.get("size", "1024x1024")
-        style = data.get("style", "vivid")
-        quality = data.get("quality", "standard")
 
         # REST-style payload per Azure OpenAI DALL·E 3
         payload = {
             "model": MODEL_DEPLOYMENT,
             "prompt": prompt,
             "size": size,
-            "style": style,
-            "quality": quality,
             "n": 1
         }
 

@@ -73,7 +73,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    UI version 1.020 🍓 — <a href="/health" target="_blank">health check</a>
+    UI version 21 🍍 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -85,7 +85,7 @@
 
     const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 1.020 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 21 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     const surprisePrompts = [
       "A neon jellyfish floating through a city skyline",
@@ -154,12 +154,13 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, style, quality, size })  // ✅ Always send clean keys
+          body: JSON.stringify({ prompt, style, quality, size })
         });
 
         const data = await res.json();
         if (!res.ok) {
           statusEl.textContent = data.error || 'Something went wrong.';
+          console.error("Backend error:", data);
           return;
         }
 
@@ -171,15 +172,16 @@
         block.innerHTML = `
           <p><em>${fullPrompt}</em></p>
           <p><strong>Image URL:</strong>
-            <span class="copy-btn" onclick="copyToClipboard('${url}')">📋</span>&nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="copy-btn" title="Click to copy URL" onclick="copyToClipboard('${url}')">📋</span>&nbsp;&nbsp;&nbsp;&nbsp;
             <a href="${url}" target="_blank" rel="noopener">View image here</a>
           </p>
           <img src="${url}" alt="Generated image" />
         `;
 
-        resultEl.prepend(block);  // ✅ Each new image stacks above the previous
+        resultEl.prepend(block);
       } catch (err) {
         statusEl.textContent = 'Network error.';
+        console.error("Network error:", err);
       }
     });
   </script>
