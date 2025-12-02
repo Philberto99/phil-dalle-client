@@ -73,7 +73,7 @@
   <div class="result" id="result"></div>
 
   <footer>
-    UI version 1.09 🍒 — <a href="/health" target="_blank">health check</a>
+    UI version 1.020 🍓 — <a href="/health" target="_blank">health check</a>
   </footer>
 
   <script>
@@ -83,16 +83,41 @@
     const resultEl = document.getElementById('result');
     const surpriseBtn = document.getElementById('surprise');
 
-    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊'];
+    const fruit = ['🍎','🍌','🍇','🍉','🍑','🍍','🥝','🍒','🍊','🍓','🥭','🍐'];
     const chosenFruit = fruit[Math.floor(Math.random() * fruit.length)];
-    document.querySelector('footer').innerHTML = `UI version 1.09 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
+    document.querySelector('footer').innerHTML = `UI version 1.020 ${chosenFruit} — <a href="/health" target="_blank">health check</a>`;
 
     const surprisePrompts = [
       "A neon jellyfish floating through a city skyline",
       "A vintage typewriter made of chocolate",
       "A futuristic flamenco dancer with robotic arms",
       "A cat made of clouds lounging on a rainbow",
-      "A surreal olive tree growing out of a vinyl record"
+      "A surreal olive tree growing out of a vinyl record",
+      "A dragon sipping tea in a library",
+      "A glowing crystal castle in the desert",
+      "A robot chef making paella in Andalusia",
+      "A cosmic whale swimming through the stars",
+      "A medieval knight riding a giant snail",
+      "A floating market on clouds",
+      "A steampunk airship shaped like a lemon",
+      "A phoenix rising from a cup of coffee",
+      "A futuristic vineyard with robotic grape-pickers",
+      "A surreal chessboard with living pieces",
+      "A giant book opening into a forest",
+      "A carnival of planets orbiting a sun",
+      "A surreal flamenco dancer made of fire",
+      "A futuristic train powered by oranges",
+      "A surreal library with flying books",
+      "A glowing mushroom forest at night",
+      "A surreal beach with rainbow waves",
+      "A futuristic guitar made of glass",
+      "A surreal olive grove under neon lights",
+      "A cosmic cat chasing comets",
+      "A surreal windmill made of mirrors",
+      "A futuristic fountain of light",
+      "A surreal orchard with glowing fruit",
+      "A surreal café floating in space",
+      "A surreal robot gardener tending stars"
     ];
 
     surpriseBtn.addEventListener('click', () => {
@@ -129,7 +154,7 @@
         const res = await fetch('/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, style, quality, size })
+          body: JSON.stringify({ prompt, style, quality, size })  // ✅ Always send clean keys
         });
 
         const data = await res.json();
@@ -152,7 +177,7 @@
           <img src="${url}" alt="Generated image" />
         `;
 
-        resultEl.prepend(block);
+        resultEl.prepend(block);  // ✅ Each new image stacks above the previous
       } catch (err) {
         statusEl.textContent = 'Network error.';
       }
